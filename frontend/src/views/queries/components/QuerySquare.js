@@ -26,6 +26,10 @@ const QuerySquare = props => {
         <Button disabled={props.loading} onClick={_=>props.handleQuery(query,1)}  type={'primary'}>
            Execute
         </Button>
+        <CustomVerticalDivider />
+        <Button disabled={props.loading} onClick={_=>props.handleSocketQuery(query,1)}  type={'primary'}>
+           Execute Long Query
+        </Button>
         <Button
           className={'hidden-element'}
           disabled={props.loading}
