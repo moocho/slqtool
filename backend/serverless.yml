@@ -17,6 +17,7 @@ provider:
     DB_USERNAME: ${file(${self:custom.config}):ADMIN.DB_USERNAME}
     DB_PASSWORD: ${file(${self:custom.config}):ADMIN.DB_PASSWORD}
     BUCKET: ${file(${self:custom.config}):BUCKET}
+    SOCKET_ENDPOINT: ${file(${self:custom.config}):WEB_SOCKET}
 
   iamRoleStatements:
     - Effect: Allow
@@ -51,6 +52,18 @@ functions:
           cors: ${self:custom.cors}
           authorizer:
             arn: ${file(${self:custom.config}):ARN}
+
+  runSocket:
+    handler: handler.runSocket
+    memorySize: 4096
+    timeout: 900
+    events:
+      - websocket:
+          route: $connect
+      - websocket:
+          route: query_raw
+      - websocket:
+          route: $disconnect
 
   excel:
     warmup: true

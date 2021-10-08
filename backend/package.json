@@ -4,7 +4,9 @@
   "description": "The backend of the dbms for the moocho app",
   "main": "handler.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy-dev": "export AWS_PROFILE=moocho-dev && sls deploy",
+    "deploy-prod": "export AWS_PROFILE=moocho-prod && sls deploy"
   },
   "author": "Cesar Salazar Userlab",
   "license": "ISC",
@@ -15,7 +17,10 @@
   "dependencies": {
     "aws-sdk": "^2.651.0",
     "exceljs": "^3.8.2",
+    "jwt-decode": "^3.1.2",
     "moment": "^2.26.0",
-    "mssql": "^6.2.0"
+    "mssql": "^6.2.0",
+    "node-jose": "^2.0.0",
+    "object-sizeof": "^1.6.1"
   }
 }

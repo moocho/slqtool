@@ -6,7 +6,8 @@ const dbConfig = (mode) => {
     options: {
       enableArithAbort: true,
       encrypt: true
-    }
+    },
+    requestTimeout: 600000
   }
   
   if(mode && mode === 'admin'){

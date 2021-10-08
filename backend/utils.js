@@ -79,6 +79,14 @@ const verifyGroup = async event => {
   return group;
 };
 
+const verifyGroupByJWT = async (token,JWT) => {
+  
+  const output= JWT(token);
+  
+  console.log(output['cognito:groups'][0],'output');
+  return output['cognito:groups'][0]
+};
+
 const saveExcelToS3 = async (stream, key, S3) => {
   const paramsToS3 = {
     Body: stream,
@@ -138,5 +146,6 @@ module.exports = {
   verifyGroup,
   saveExcelToS3,
   detailFile,
-  wakeUpLambda
+  wakeUpLambda,
+  verifyGroupByJWT
 };
