@@ -72,6 +72,7 @@ const QueryPage = props => {
     }
 
     socket.onopen = function () {
+      console.log('conexion realizada con exito')
       socket.send(JSON.stringify({ action: 'query_raw', data: queryObject }))
     }
 
@@ -86,7 +87,7 @@ const QueryPage = props => {
           })
         }
 
-        if (JSON.parse(data).response === 'fin') {
+        if (JSON.parse(data).response === 'process completed') {
           response = {
             response: { recordsets: [response] },
           }
