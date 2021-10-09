@@ -4,13 +4,21 @@ import {Row, Col, Divider, message, Button, Spin} from 'antd'
 // HOC
 import { withRouter } from 'react-router'
 
+import config from '../../config/config.json'
 // Components
 import QuerySquare from './components/QuerySquare'
 import Message from './components/Message'
 import DynamicTable2 from './components/DynamicTable2'
 import SaveQueryModal from './components/SaveQueryModal'
-import { fetchSavedQueries, fetchQuery, fetchExportExcel } from '../../config/Api'
-import CopyToClipboardFromTableBody from "./components/CopyToClipboardFromTableBody";
+import {
+  fetchSavedQueries,
+  fetchQuery,
+  fetchExportExcel,
+} from '../../config/Api'
+import CopyToClipboardFromTableBody from './components/CopyToClipboardFromTableBody'
+
+//Api
+import { getToken } from '../../config/Api'
 
 const QueryPage = props => {
   const [recordsets, setRecordsets] = useState([])
@@ -49,13 +57,113 @@ const QueryPage = props => {
     )
   }
 
-  const executeQuery = async (query,pageNumber) => {
+  const getSocket = async (query, pageNumber) => {
+    setLoading(true)
+    let token = await getToken()
+    let queryObject = { query: query, pageNumber: pageNumber, _x: token }
+    let queryResult = []
+    let response = []
+
+    let socket = new WebSocket(config.RUN_SOCKET)
+
+    socket.onerror = error => {
+      console.log(error, 'error')
+      setLoading(false)
+    }
+
+    socket.onopen = function () {
+      console.log('conexion realizada con exito')
+      socket.send(JSON.stringify({ action: 'query_raw', data: queryObject }))
+    }
+
+    socket.onmessage = ({ data }) => {
+      queryResult = JSON.parse(data)
+      if (queryResult.queryToLong) {
+        if (typeof queryResult.response !== 'string') {
+          queryResult.response.forEach(element => {
+            element.forEach(res => {
+              response.push(res)
+            })
+          })
+        }
+
+        if (JSON.parse(data).response === 'process completed') {
+          response = {
+            response: { recordsets: [response] },
+          }
+          executeQuerySocket(response, pageNumber)
+          socket.close()
+        }
+      } else {
+        executeQuerySocket(queryResult, pageNumber)
+        socket.close()
+      }
+    }
+  }
+
+  const executeQuerySocket = async (query, pageNumber) => {
+    setRecordsets([])
+    setRecordsets2([])
+    let queryResult = query
+
+    try {
+      if (pageNumber === 1) {
+        setNextHandler(1)
+      }
+
+      if (typeof queryResult !== 'object') {
+        message.warning(queryResult)
+        return
+      }
+
+      queryResult = queryResult.response
+
+      if (!checkRecordSets(queryResult)) {
+        setRecordsets([])
+      } else {
+        if (queryResult.recordsets.length === 2) {
+          setShowingMessage(false)
+          let json = JSON.stringify(queryResult.recordsets[0], (k, v) =>
+            v && typeof v === 'object' ? v : '' + (v === '' ? '-' : v)
+          )
+          let json2 = JSON.stringify(queryResult.recordsets[1], (k, v) =>
+            v && typeof v === 'object' ? v : '' + (v === '' ? '-' : v)
+          )
+          setRecordsets(JSON.parse(json))
+          setRecordsets2(JSON.parse(json2))
+        } else {
+          setShowingMessage(false)
+          let json = JSON.stringify(queryResult.recordsets[0], (k, v) =>
+            v && typeof v === 'object' ? v : '' + (v === '' ? '-' : v)
+          )
+          setRecordsets(JSON.parse(json))
+        }
+      }
+
+      // Set rowsAffected
+      if (!checkRowsAffected(queryResult)) {
+        SetRowsAffected([])
+        setShowingMessage(false)
+      } else {
+        setShowingMessage(true)
+        SetRowsAffected(queryResult.rowsAffected[0])
+      }
+      setNextQueryHandler(query)
+    } catch (e) {
+      message.error('Error')
+      setShowingMessage(false)
+      setRecordsets([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const executeQuery = async (query, pageNumber) => {
     setRecordsets([])
     setRecordsets2([])
     setLoading(true)
     let queryResult
     try {
-
       if (pageNumber === 1){
         setNextHandler(1)
       }
@@ -166,7 +274,7 @@ const QueryPage = props => {
         <>{Message.success(`Rows Affected: ${rowsAffected}`)}</>
       ) : null}
       <Col sm={24} style={{ marginTop: '10px' }}>
-        <QuerySquare loading={loading} handleQuery={executeQuery} handlerExcel={exportExcel} handleToCopy={copyToClipBoard} querySaved={savedQueryToUse}/>
+        <QuerySquare loading={loading} handleQuery={executeQuery} handleSocketQuery={getSocket} handlerExcel={exportExcel} handleToCopy={copyToClipBoard} querySaved={savedQueryToUse}/>
       </Col>
       <Divider style={{ backgroundColor: 'lightgray' }} />
       {recordsets.length > 0 && (
