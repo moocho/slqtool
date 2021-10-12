@@ -91,17 +91,15 @@ const QueryPage = props => {
           response = {
             response: { recordsets: [response] },
           }
-          executeQuerySocket(response, pageNumber)
-          socket.close()
+          executeQuerySocket(response, pageNumber, socket)
         }
       } else {
-        executeQuerySocket(queryResult, pageNumber)
-        socket.close()
+        executeQuerySocket(queryResult, pageNumber, socket)
       }
     }
   }
 
-  const executeQuerySocket = async (query, pageNumber) => {
+  const executeQuerySocket = async (query, pageNumber, socket) => {
     setRecordsets([])
     setRecordsets2([])
     let queryResult = query
@@ -150,10 +148,12 @@ const QueryPage = props => {
       }
       setNextQueryHandler(query)
     } catch (e) {
+      socket.close()
       message.error('Error')
       setShowingMessage(false)
       setRecordsets([])
     } finally {
+      socket.close()
       setLoading(false)
     }
   }
