@@ -67,6 +67,7 @@ const QueryPage = props => {
     let socket = new WebSocket(config.RUN_SOCKET)
 
     socket.onopen = () => {
+      console.log('conection open')
       socket.send(JSON.stringify({ action: 'query_raw', data: queryObject }))
     }
 
