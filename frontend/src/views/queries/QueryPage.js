@@ -79,7 +79,7 @@ const QueryPage = props => {
     socket.onmessage = ({ data }) => {
       queryResult = JSON.parse(data)
 
-      if(queryResult.message === 'Endpoint request timed out'){
+      if(queryResult.response.message === 'Endpoint request timed out'){
         return
       }
 
