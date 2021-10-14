@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import {Row, Col, Divider, message, Button, Spin} from 'antd'
+import { Row, Col, Divider, message, Button, Spin } from 'antd'
 
 // HOC
 import { withRouter } from 'react-router'
@@ -29,8 +29,8 @@ const QueryPage = props => {
   const [isOpenSaveQueryModal, setIsOpenSaveQueryModal] = useState(false)
   const [saveQueryLoading, setSaveQueryLoading] = useState(false)
 
-  const [nextHandler,setNextHandler] = useState(1)
-  const [nextQueryHandler,setNextQueryHandler] = useState("")
+  const [nextHandler, setNextHandler] = useState(1)
+  const [nextQueryHandler, setNextQueryHandler] = useState('')
 
   const numberOfRows = 1000
 
@@ -66,41 +66,45 @@ const QueryPage = props => {
 
     let socket = new WebSocket(config.RUN_SOCKET)
 
-    socket.onerror = error => {
-      console.log(error, 'error')
-      setLoading(false)
-    }
-
-    socket.onopen = function () {
-      console.log('conexion realizada con exito')
+    socket.onopen = () => {
       socket.send(JSON.stringify({ action: 'query_raw', data: queryObject }))
     }
 
     socket.onmessage = ({ data }) => {
       queryResult = JSON.parse(data)
-
-      if(queryResult.response.message === 'Endpoint request timed out'){
-        return
-      }
-
-      if (queryResult.queryToLong) {
-        if (typeof queryResult.response !== 'string') {
-          queryResult.response.forEach(element => {
-            element.forEach(res => {
-              response.push(res)
-            })
-          })
-        }
-
-        if (JSON.parse(data).response === 'process completed') {
-          response = {
-            response: { recordsets: [response] },
+      console.log(queryResult)
+      if (
+        queryResult &&
+        queryResult.message &&
+        queryResult.message.toLowerCase() === 'endpoint request timed out'
+      )
+        console.log('API gateway timeout reached')
+      else {
+        if (queryResult.queryToLong) {
+          if (Array.isArray(queryResult.response))
+            response = [...response, ...queryResult.response]
+          if (JSON.parse(data).response === 'process completed') {
+            socket.close()
+            response = {
+              response: { recordsets: [response] },
+            }
+            executeQuerySocket(response, pageNumber, socket)
           }
-          executeQuerySocket(response, pageNumber, socket)
+        } else {
+          executeQuerySocket(queryResult, pageNumber, socket)
         }
-      } else {
-        executeQuerySocket(queryResult, pageNumber, socket)
       }
+    }
+
+    socket.onclose = ({ wasClean, code, reason }) => {
+      console.log({ closed: { wasClean, code, reason } })
+      setLoading(false)
+    }
+
+    socket.onerror = error => {
+      message.error(`An error has occurred. See console for details. ${error}`)
+      socket.close()
+      setLoading(false)
     }
   }
 
@@ -169,14 +173,14 @@ const QueryPage = props => {
     setLoading(true)
     let queryResult
     try {
-      if (pageNumber === 1){
+      if (pageNumber === 1) {
         setNextHandler(1)
       }
 
-      let queryObject ={query:query,pageNumber:pageNumber}
+      let queryObject = { query: query, pageNumber: pageNumber }
       queryResult = await fetchQuery(queryObject)
 
-      if(typeof(queryResult) !== 'object'){
+      if (typeof queryResult !== 'object') {
         message.warning(queryResult)
         return
       }
@@ -184,19 +188,23 @@ const QueryPage = props => {
       if (!checkRecordSets(queryResult)) {
         setRecordsets([])
       } else {
-
-        if(queryResult.recordsets.length === 2){
+        if (queryResult.recordsets.length === 2) {
           setShowingMessage(false)
-          let json = JSON.stringify(queryResult.recordsets[0], (k, v) => v && typeof v === 'object' ? v : '' + (v === '' ? '-' :v));
-          let json2 = JSON.stringify(queryResult.recordsets[1], (k, v) => v && typeof v === 'object' ? v : '' + (v === '' ? '-' :v));
+          let json = JSON.stringify(queryResult.recordsets[0], (k, v) =>
+            v && typeof v === 'object' ? v : '' + (v === '' ? '-' : v)
+          )
+          let json2 = JSON.stringify(queryResult.recordsets[1], (k, v) =>
+            v && typeof v === 'object' ? v : '' + (v === '' ? '-' : v)
+          )
           setRecordsets(JSON.parse(json))
           setRecordsets2(JSON.parse(json2))
-        }else{
+        } else {
           setShowingMessage(false)
-          let json = JSON.stringify(queryResult.recordsets[0], (k, v) => v && typeof v === 'object' ? v : '' + (v === '' ? '-' :v));
+          let json = JSON.stringify(queryResult.recordsets[0], (k, v) =>
+            v && typeof v === 'object' ? v : '' + (v === '' ? '-' : v)
+          )
           setRecordsets(JSON.parse(json))
         }
-
       }
 
       // Set rowsAffected
@@ -218,10 +226,9 @@ const QueryPage = props => {
   }
 
   const executeQueryNext = () => {
-    let page = nextHandler+1
+    let page = nextHandler + 1
     setNextHandler(page)
-    executeQuery(nextQueryHandler,page)
-
+    executeQuery(nextQueryHandler, page)
   }
 
   const saveQuery = async query => {
@@ -230,7 +237,6 @@ const QueryPage = props => {
     try {
       // eslint-disable-next-line
       const savedQueries = await fetchSavedQueries()
-
     } catch (e) {
       message.error('Error saving the query')
     } finally {
@@ -239,80 +245,97 @@ const QueryPage = props => {
     }
   }
 
-  const exportExcel = async (query) => {
+  const exportExcel = async query => {
     setLoading(true)
-    if(query !== ""){
-      let queryObject ={query:query}
+    if (query !== '') {
+      let queryObject = { query: query }
       let queryResult = await fetchExportExcel(queryObject)
       setLoading(false)
-      if(typeof(queryResult) === 'object'){
-        window.open(queryResult.link);
-      }else{
-       message.warning(queryResult)
+      if (typeof queryResult === 'object') {
+        window.open(queryResult.link)
+      } else {
+        message.warning(queryResult)
       }
     }
   }
 
   const copyToClipBoard = () => {
-    let tableToCopy = document.querySelectorAll('.dynamic-table-2 .ant-table .ant-table-container .ant-table-content table')
-    if(tableToCopy === null ) return message.error('There is no data to copy')
+    let tableToCopy = document.querySelectorAll(
+      '.dynamic-table-2 .ant-table .ant-table-container .ant-table-content table'
+    )
+    if (tableToCopy === null) return message.error('There is no data to copy')
     CopyToClipboardFromTableBody(tableToCopy)
   }
 
-  const pageNumber = (rows) => {
-    let number = rows / numberOfRows;
-    return number.toString().split('.')[1] ?
-      Math.trunc(number) + 1 :
-      Math.round((number))
+  const pageNumber = rows => {
+    let number = rows / numberOfRows
+    return number.toString().split('.')[1]
+      ? Math.trunc(number) + 1
+      : Math.round(number)
   }
 
   return (
-    <Spin spinning={loading} tip="Waiting for results...">
-    <Row className='query-page'>
-      <SaveQueryModal
-        visible={isOpenSaveQueryModal}
-        handleCloseModal={() => setIsOpenSaveQueryModal(false)}
-        handleSaveQuery={saveQuery}
-        loading={saveQueryLoading}
-      />
-      {showingMessage ? (
-        <>{Message.success(`Rows Affected: ${rowsAffected}`)}</>
-      ) : null}
-      <Col sm={24} style={{ marginTop: '10px' }}>
-        <QuerySquare loading={loading} handleQuery={executeQuery} handleSocketQuery={getSocket} handlerExcel={exportExcel} handleToCopy={copyToClipBoard} querySaved={savedQueryToUse}/>
-      </Col>
-      <Divider style={{ backgroundColor: 'lightgray' }} />
-      {recordsets.length > 0 && (
-        <Col className={'hidden-element'} sm={24} style={{textAlign:'right',marginBottom:'5px'}}>
-          <span style={{marginRight:'10px'}}>
-            {!(rowsAffected >= numberOfRows) ?
-              '1/1':
-              `${nextHandler}/${pageNumber(rowsAffected)}`
-            }
-          </span>
-          <Button
+    <Spin spinning={loading} tip='Waiting for results...'>
+      <Row className='query-page'>
+        <SaveQueryModal
+          visible={isOpenSaveQueryModal}
+          handleCloseModal={() => setIsOpenSaveQueryModal(false)}
+          handleSaveQuery={saveQuery}
+          loading={saveQueryLoading}
+        />
+        {showingMessage ? (
+          <>{Message.success(`Rows Affected: ${rowsAffected}`)}</>
+        ) : null}
+        <Col sm={24} style={{ marginTop: '10px' }}>
+          <QuerySquare
+            loading={loading}
+            handleQuery={executeQuery}
+            handleSocketQuery={getSocket}
+            handlerExcel={exportExcel}
+            handleToCopy={copyToClipBoard}
+            querySaved={savedQueryToUse}
+          />
+        </Col>
+        <Divider style={{ backgroundColor: 'lightgray' }} />
+        {recordsets.length > 0 && (
+          <Col
             className={'hidden-element'}
-            disabled={!(rowsAffected >= numberOfRows) || (nextHandler === pageNumber(rowsAffected))}
-            onClick={executeQueryNext}>
-            NEXT PAGE</Button>
-        </Col>
-      )}
-      {recordsets2 ? (
-        <>
-        <Col sm={24}>
-          <DynamicTable2 recordsets={recordsets} />
-        </Col>
-          <Divider style={{ backgroundColor: 'lightgray' }} />
-        <Col sm={24}>
-        <DynamicTable2 recordsets={recordsets2} />
-        </Col>
-        </>
-      ):(
-        <Col sm={24}>
-          <DynamicTable2 recordsets={recordsets} />
-        </Col>
-      )}
-    </Row>
+            sm={24}
+            style={{ textAlign: 'right', marginBottom: '5px' }}
+          >
+            <span style={{ marginRight: '10px' }}>
+              {!(rowsAffected >= numberOfRows)
+                ? '1/1'
+                : `${nextHandler}/${pageNumber(rowsAffected)}`}
+            </span>
+            <Button
+              className={'hidden-element'}
+              disabled={
+                !(rowsAffected >= numberOfRows) ||
+                nextHandler === pageNumber(rowsAffected)
+              }
+              onClick={executeQueryNext}
+            >
+              NEXT PAGE
+            </Button>
+          </Col>
+        )}
+        {recordsets2 ? (
+          <>
+            <Col sm={24}>
+              <DynamicTable2 recordsets={recordsets} />
+            </Col>
+            <Divider style={{ backgroundColor: 'lightgray' }} />
+            <Col sm={24}>
+              <DynamicTable2 recordsets={recordsets2} />
+            </Col>
+          </>
+        ) : (
+          <Col sm={24}>
+            <DynamicTable2 recordsets={recordsets} />
+          </Col>
+        )}
+      </Row>
     </Spin>
   )
 }

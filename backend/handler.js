@@ -133,13 +133,20 @@ module.exports.runSocket = async event => {
         
         if(sizeof(db_response.recordsets[0]) > 32000){
           console.log('Data too large')
-          let i,j, temporary = [], chunk = db_response.recordsets[0].length/60;
-          for (i = 0,j = db_response.recordsets[0].length; i < j; i += chunk) {
-            temporary.push(db_response.recordsets[0].slice(i, i + chunk));
-            if(temporary.length >= 10){
-              console.log('sending the response', temporary)
-              await apiGatewayPost(_connection, {'response':temporary, 'queryToLong': true})
-              temporary = []
+
+          let index = 0;
+          let size = 0
+          
+          for (let i = 0; i < db_response.recordsets[0].length; i++) {
+            const currentSize = sizeof(db_response.recordsets[0][i])
+            if (size + currentSize < 30000) 
+              size += currentSize
+            else {
+              size = 0
+              const temp = db_response.recordsets[0].slice(index, i)
+              index = i
+              console.log('chunk', temp)
+              await apiGatewayPost(_connection, {'response': temp, 'queryToLong': true})
             }
           }
           await apiGatewayPost(_connection, {'response': 'process completed', 'queryToLong': true})
@@ -147,7 +154,6 @@ module.exports.runSocket = async event => {
           console.log('sending the response')
           await apiGatewayPost(_connection, {'response':db_response, 'queryToLong': false})
         }
-        connection.close();
         console.log('DONE')
         break
     
