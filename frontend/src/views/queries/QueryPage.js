@@ -72,7 +72,6 @@ const QueryPage = props => {
 
     socket.onmessage = ({ data }) => {
       queryResult = JSON.parse(data)
-      console.log(queryResult)
       if (
         queryResult &&
         queryResult.message &&
@@ -83,7 +82,7 @@ const QueryPage = props => {
         if (queryResult.queryToLong) {
           if (Array.isArray(queryResult.response))
             response = [...response, ...queryResult.response]
-          if (JSON.parse(data).response === 'process completed') {
+          if (queryResult.response === 'process completed') {
             socket.close()
             response = {
               response: { recordsets: [response] },
