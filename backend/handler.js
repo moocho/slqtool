@@ -155,6 +155,7 @@ module.exports.runSocket = async event => {
           await apiGatewayPost(_connection, {'response':db_response, 'queryToLong': false})
         }
         console.log('DONE')
+        connection.close();
         break
     
       default:
