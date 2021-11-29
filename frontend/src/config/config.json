@@ -1,7 +1,8 @@
 {
-  "REACT_APP_BACKEND_ENDPOINT":" https://c0dt9mptl4.execute-api.us-east-1.amazonaws.com/prod/run",
-  "REACT_APP_BACKEND_LIST_ENDPOINT":" https://c0dt9mptl4.execute-api.us-east-1.amazonaws.com/prod/read",
-  "REACT_APP_BACKEND_DETAIL_ENDPOINT":" https://c0dt9mptl4.execute-api.us-east-1.amazonaws.com/prod/details?name=",
+  "REACT_APP_BACKEND_ENDPOINT": " https://c0dt9mptl4.execute-api.us-east-1.amazonaws.com/prod/run",
+  "REACT_APP_BACKEND_LIST_ENDPOINT": " https://c0dt9mptl4.execute-api.us-east-1.amazonaws.com/prod/read",
+  "REACT_APP_BACKEND_DETAIL_ENDPOINT": " https://c0dt9mptl4.execute-api.us-east-1.amazonaws.com/prod/details?name=",
   "REACT_APP_SAVE_QUERIES": " https://c0dt9mptl4.execute-api.us-east-1.amazonaws.com/prod/save",
-  "REACT_APP_EXPORT_EXCEL": " https://c0dt9mptl4.execute-api.us-east-1.amazonaws.com/prod/excel"
+  "REACT_APP_EXPORT_EXCEL": " https://c0dt9mptl4.execute-api.us-east-1.amazonaws.com/prod/excel",
+  "RUN_SOCKET": "wss://6ttlye6jzh.execute-api.us-east-1.amazonaws.com/prod"
 }
