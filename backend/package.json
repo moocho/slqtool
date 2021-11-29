@@ -15,7 +15,7 @@
     "serverless-plugin-warmup": "^4.9.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.651.0",
+    "aws-sdk": "^2.814.0",
     "exceljs": "^3.8.2",
     "jwt-decode": "^3.1.2",
     "moment": "^2.26.0",
