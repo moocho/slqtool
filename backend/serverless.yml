@@ -4,7 +4,7 @@ provider:
   name: aws
   runtime: nodejs12.x
   stage: ${opt:stage, 'prod'}
-  region: 'us-east-1'
+  region: "us-east-1"
   deploymentBucket:
     name: ${file(${self:custom.config}):DEPLOYMENT_BUCKET}
   timeout: 29
@@ -12,17 +12,17 @@ provider:
     DB_HOST: ${file(${self:custom.config}):DB_HOST}
     DB_PORT: ${file(${self:custom.config}):DB_PORT}
     DB_NAME: ${file(${self:custom.config}):DB_NAME}
-    DB_USERNAME_READ: ${file(${self:custom.config}):READ.DB_USERNAME}
-    DB_PASSWORD_READ: ${file(${self:custom.config}):READ.DB_PASSWORD}
-    DB_USERNAME: ${file(${self:custom.config}):ADMIN.DB_USERNAME}
-    DB_PASSWORD: ${file(${self:custom.config}):ADMIN.DB_PASSWORD}
+    DB_USERNAME_READ: ${file(${self:custom.config}):DB_USERNAME_READ}
+    DB_PASSWORD_READ: ${file(${self:custom.config}):DB_PASSWORD_READ}
+    DB_USERNAME: ${file(${self:custom.config}):DB_USERNAME}
+    DB_PASSWORD: ${file(${self:custom.config}):DB_PASSWORD}
     BUCKET: ${file(${self:custom.config}):BUCKET}
-    SOCKET_ENDPOINT: ${file(${self:custom.config}):WEB_SOCKET}
+    SOCKET_ENDPOINT: ${file(${self:custom.config}):SOCKET_ENDPOINT}
 
   iamRoleStatements:
     - Effect: Allow
-      Action: '*'
-      Resource: '*'
+      Action: "*"
+      Resource: "*"
 
 plugins:
   - serverless-offline
@@ -31,7 +31,7 @@ plugins:
 custom:
   config: ./config/config.${self:provider.stage}.json
   cors:
-    origin: '*'
+    origin: "*"
     allowCredentials: true
     headers:
       - Content-Type
