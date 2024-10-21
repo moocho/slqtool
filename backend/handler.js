@@ -42,6 +42,10 @@ module.exports.run = async event => {
     
     if (!body || body.query === "") throw Error("missing_body");
     
+    console.log(group)
+
+    console.log(`${event.requestContext.identity.sourceIp} - ${body.query}`)
+
     const connection = await sql.connect(db(group));
     const db_response = await sql.query(body.query);
     
@@ -70,7 +74,7 @@ module.exports.run = async event => {
     return await response(200, db_response, connection);
   } catch (e) {
     console.log(e, "<--- error");
-    return await response(400, e.message, null);
+    return await response(400, "", null);
   }
 };
 
@@ -101,10 +105,12 @@ module.exports.runSocket = async event => {
 
         if (!group) throw Error("group_not_valid.");
         console.log('connecting')
-
+        console.log(group)
         const connection = await sql.connect(db(group));
         console.log('connected...')
+        console.log(`${event.requestContext.identity.sourceIp} - ${body.data.query}`)
         const db_response = await sql.query(body.data.query);
+
         console.log('getting the response')
         delete db_response.recordset;
         console.log(sizeof(db_response.recordsets[0]));
@@ -168,7 +174,7 @@ module.exports.runSocket = async event => {
     return await response(200, {message:'socket!'}, null);
   } catch (e) {
     console.log(e, "<--- error");
-    if (_connection) await apiGatewayPost(_connection, e.message )
+    if (_connection) await apiGatewayPost(_connection, "" )
   }
 };
 
